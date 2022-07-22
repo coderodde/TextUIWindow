@@ -39,6 +39,9 @@ public class TextUIWindow extends Canvas {
     private final Set<TextUIWindowMouseListener> mouseMotionListeners = 
             new HashSet<>();
     
+    private final Set<TextUIWindowKeyboardListener> keyboardListeners =
+            new HashSet<>();
+    
     private final Color[][] backgroundColorGrid;
     private final Color[][] foregroundColorGrid;
     private final char[][] charGrid;
@@ -70,11 +73,12 @@ public class TextUIWindow extends Canvas {
         setDefaultBackgroundColors();
         setChars();
         
-        this.setWidth(width * fontWidth);
+        this.setWidth(width * (fontWidth + charDelimiterLength));
         this.setHeight(height * fontHeight);
         
         setMouseListeners();
         setMouseMotionListeners();
+        setKeyboardListeners();
     }
     
     public int getGridWidth() {
@@ -101,6 +105,16 @@ public class TextUIWindow extends Canvas {
         mouseMotionListeners.remove(listener);
     }
     
+    public void addTextUIWindowKeyboardListener(
+            TextUIWindowKeyboardListener listener) {
+        keyboardListeners.add(listener);
+    }
+    
+    public void removeTextUIWindowKeyboardListener(
+            TextUIWindowKeyboardListener listener) {
+        keyboardListeners.remove(listener);
+    }
+    
     private void setMouseListeners() {
         setMouseClickedListener();
         setMouseEnteredListener();
@@ -112,6 +126,26 @@ public class TextUIWindow extends Canvas {
     private void setMouseMotionListeners() {
         setMouseMovedListener();
         setMouseDraggedListener();
+    }
+    
+    private void setKeyboardListeners() {
+        this.setOnKeyPressed(e -> {
+            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
+                listener.onKeyPressed(e);
+            }
+        });
+        
+        this.setOnKeyReleased(e -> {
+            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
+                listener.onKeyReleased(e);
+            }
+        });
+        
+        this.setOnKeyTyped(e -> {
+            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
+                listener.onKeyTyped(e);
+            }
+        });
     }
     
     private void setMouseMovedListener() {
@@ -241,21 +275,11 @@ public class TextUIWindow extends Canvas {
     }
     
     private int convertPixelXtoCharX(int pixelX) {
-        if (pixelX < this.fontWidth + this.charDelimiterLength / 2) {
-            return 0;
-        }
-        
-        int normalizedPixelX = pixelX - fontWidth - charDelimiterLength;
-        return 1 + normalizedPixelX / (fontWidth + charDelimiterLength);
+        return pixelX / (fontWidth + charDelimiterLength);
     }
     
     private int convertPixelYtoCharY(int pixelY) {
-        if (pixelY < this.fontHeight) {
-            return 0;
-        }
-        
-        int normalizedPixelY = pixelY - fontHeight - windowTitleBorderThickness;
-        return 1 + normalizedPixelY / fontHeight;
+        return (pixelY - windowTitleBorderThickness) / fontHeight;
     }
             
     public void setTitleBorderThickness(int thickness) {
@@ -281,22 +305,27 @@ public class TextUIWindow extends Canvas {
         repaintCellForeground(gc, x, y);
     }
     
-    private void repaintCellBackground(GraphicsContext gc, int x, int y) {
-        gc.setFill(backgroundColorGrid[y][x]);
-        gc.fillRect(fontWidth * x, 
-                    fontHeight * y + windowTitleBorderThickness, 
-                    fontWidth, 
+    private void repaintCellBackground(GraphicsContext gc,  
+                                       int charX, 
+                                       int charY) {
+        
+        gc.setFill(backgroundColorGrid[charY][charX]);
+        gc.fillRect(charX * (fontWidth + charDelimiterLength),
+                    charY * fontHeight,
+                    fontWidth + charDelimiterLength,
                     fontHeight);
     }
             
-    private void repaintCellForeground(GraphicsContext gc, int x, int y) {
-        gc.setFill(foregroundColorGrid[y][x]);
+    private void repaintCellForeground(GraphicsContext gc,
+                                       int charX, 
+                                       int charY) {
         gc.setFont(font);
-        gc.fillText("" + charGrid[y][x], 
-                    x == 0 ?
-                        0 :
-                        fontWidth * x + charDelimiterLength,
-                    fontHeight * (y + 1) + windowTitleBorderThickness);
+        gc.setFill(foregroundColorGrid[charY][charX]);
+        
+        gc.fillText("" + charGrid[charY][charX],
+                    charDelimiterLength / 2 +
+                            (fontWidth + charDelimiterLength) * charX,
+                    fontHeight + (charY + 1));
     }
     
     public Color getForegroundColor(int x, int y) {
