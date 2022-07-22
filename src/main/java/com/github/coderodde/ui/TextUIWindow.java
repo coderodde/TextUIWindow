@@ -73,8 +73,22 @@ public class TextUIWindow extends Canvas {
         this.setWidth(width * fontWidth);
         this.setHeight(height * fontHeight);
         
-        
         setMouseListeners();
+        setMouseMotionListeners();
+    }
+    
+    public int getGridWidth() {
+        return width;
+    }
+    
+    public int getGridHeight() {
+        return height;
+    }
+    
+    public void printString(int charX, int charY, String text) {
+        for (int i = 0; i < text.length(); ++i) {
+            setChar(charX + i, charY, text.charAt(i));
+        }
     }
     
     public void addTextUIWindowMouseListener(
@@ -93,6 +107,47 @@ public class TextUIWindow extends Canvas {
         setMousePressedListener();
         setMouseReleasedListener();
         setMouseExitedListener();
+    }
+    
+    private void setMouseMotionListeners() {
+        setMouseMovedListener();
+        setMouseDraggedListener();
+    }
+    
+    private void setMouseMovedListener() {
+        this.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                int pixelX = (int) event.getX();
+                int pixelY = (int) event.getY();
+                
+                int charX = convertPixelXtoCharX(pixelX);
+                int charY = convertPixelYtoCharY(pixelY);
+                
+                for (TextUIWindowMouseListener listener 
+                        : mouseMotionListeners) {
+                    listener.onMouseMove(event, charX, charY);
+                }
+            }
+        });
+    }
+    
+    private void setMouseDraggedListener() {
+        this.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                int pixelX = (int) event.getX();
+                int pixelY = (int) event.getY();
+                
+                int charX = convertPixelXtoCharX(pixelX);
+                int charY = convertPixelYtoCharY(pixelY);
+                
+                for (TextUIWindowMouseListener listener 
+                        : mouseMotionListeners) {
+                    listener.onMouseClick(event, charX, charY);
+                }
+            }
+        });
     }
     
     private void setMouseClickedListener() {
@@ -202,7 +257,7 @@ public class TextUIWindow extends Canvas {
         int normalizedPixelY = pixelY - fontHeight - windowTitleBorderThickness;
         return 1 + normalizedPixelY / fontHeight;
     }
-    
+            
     public void setTitleBorderThickness(int thickness) {
         this.windowTitleBorderThickness = thickness;
     }

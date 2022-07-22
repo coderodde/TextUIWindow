@@ -29,4 +29,12 @@ public interface TextUIWindowMouseListener {
     default void onMouseReleased(MouseEvent e, int charX, int charY) {
         
     }
+    
+    default void onMouseMove(MouseEvent e, int charX, int charY) {
+        
+    }
+    
+    default void onMouseDragged(MouseEvent e, int charX, int charY) {
+        
+    }
 }
