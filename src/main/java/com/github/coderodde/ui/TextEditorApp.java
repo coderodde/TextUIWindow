@@ -17,12 +17,38 @@ import javafx.stage.Stage;
  */
 public class TextEditorApp extends Application {
     
-    private static final String HELLO_WORLD_STRING = "Hello, world!";
+    private static final int CHAR_GRID_WIDTH = 80;
+    private static final int CHAR_GRID_HEIGHT = 48;
+    private static final int FONT_SIZE = 17;
+    private static final int CHAR_HORIZONTAL_DELIMITER_LENGTH = 3;
     private static final int SLEEP_MILLISECONDS = 400;
+    private static final String HELLO_WORLD_STRING = "Hello, world! ";
+    
+    private final TextUIWindow window;
+    private final HelloWorldThread helloWorldThread;
 
+    public TextEditorApp() {
+        this.window = new TextUIWindow(CHAR_GRID_WIDTH,
+                                       CHAR_GRID_HEIGHT,
+                                       FONT_SIZE,
+                                       CHAR_HORIZONTAL_DELIMITER_LENGTH);
+                                       
+        this.helloWorldThread = new HelloWorldThread(window);
+    }
+    
+    @Override
+    public void stop() {
+        helloWorldThread.requestExit();
+        
+        try {
+            helloWorldThread.join();
+        } catch (InterruptedException ex) {
+            
+        }
+    }
+    
     @Override
     public void start(Stage primaryStage) {
-        TextUIWindow window = new TextUIWindow(80, 48, 18, 0);
         StackPane root = new StackPane();
         root.getChildren().add(window);
         Scene scene = new Scene(root, 
@@ -34,13 +60,14 @@ public class TextEditorApp extends Application {
         window.setTitleBorderThickness((int) scene.getY());
         
         primaryStage.setScene(scene);
+        helloWorldThread.start();
         
-        new HelloWorldThread(window).start();
-        
-        primaryStage.show();
+        window.setChar(window.getGridWidth() - 1, window.getGridHeight() - 1, '?');
+        window.addTextUIWindowMouseListener(new TextEditorMouseListener());
         
         window.repaint();
-        window.addTextUIWindowMouseListener(new TextEditorMouseListener());
+        primaryStage.setResizable(false);
+        primaryStage.show();
     }
     
     public static void main(String[] args) {
@@ -62,7 +89,9 @@ public class TextEditorApp extends Application {
         
         @Override
         public void run() {
-            int xOffset = (window.getGridWidth() - HELLO_WORLD_STRING.length());
+            int xOffset = 
+                    (window.getGridWidth() - HELLO_WORLD_STRING.length()) / 2;
+            
             List<Character> characterList = 
                     new ArrayList<>(HELLO_WORLD_STRING.length());
             
@@ -81,6 +110,7 @@ public class TextEditorApp extends Application {
                 window.printString(xOffset, 0, text);
                 Character ch = characterList.remove(0);
                 characterList.add(ch);
+                window.repaint();
             }
         }
         
