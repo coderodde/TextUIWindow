@@ -77,6 +77,16 @@ public class TextUIWindow extends Canvas {
         setMouseListeners();
     }
     
+    public void addTextUIWindowMouseListener(
+            TextUIWindowMouseListener listener) {
+        mouseMotionListeners.add(listener);
+    }
+    
+    public void removeTextUIWindowMouseListener(
+            TextUIWindowMouseListener listener) {
+        mouseMotionListeners.remove(listener);
+    }
+    
     private void setMouseListeners() {
         setMouseClickedListener();
         setMouseEnteredListener();
@@ -93,7 +103,7 @@ public class TextUIWindow extends Canvas {
                 int pixelY = (int) event.getY();
                 
                 int charX = convertPixelXtoCharX(pixelX);
-                int charY = convertPixelXtoCharX(pixelY);
+                int charY = convertPixelYtoCharY(pixelY);
                 
                 for (TextUIWindowMouseListener listener 
                         : mouseMotionListeners) {
@@ -111,7 +121,7 @@ public class TextUIWindow extends Canvas {
                 int pixelY = (int) event.getY();
                 
                 int charX = convertPixelXtoCharX(pixelX);
-                int charY = convertPixelXtoCharX(pixelY);
+                int charY = convertPixelYtoCharY(pixelY);
                 
                 for (TextUIWindowMouseListener listener 
                         : mouseMotionListeners) {
@@ -129,7 +139,7 @@ public class TextUIWindow extends Canvas {
                 int pixelY = (int) event.getY();
                 
                 int charX = convertPixelXtoCharX(pixelX);
-                int charY = convertPixelXtoCharX(pixelY);
+                int charY = convertPixelYtoCharY(pixelY);
                 
                 for (TextUIWindowMouseListener listener 
                         : mouseMotionListeners) {
@@ -147,7 +157,7 @@ public class TextUIWindow extends Canvas {
                 int pixelY = (int) event.getY();
                 
                 int charX = convertPixelXtoCharX(pixelX);
-                int charY = convertPixelXtoCharX(pixelY);
+                int charY = convertPixelYtoCharY(pixelY);
                 
                 for (TextUIWindowMouseListener listener 
                         : mouseMotionListeners) {
@@ -165,7 +175,7 @@ public class TextUIWindow extends Canvas {
                 int pixelY = (int) event.getY();
                 
                 int charX = convertPixelXtoCharX(pixelX);
-                int charY = convertPixelXtoCharX(pixelY);
+                int charY = convertPixelYtoCharY(pixelY);
                 
                 for (TextUIWindowMouseListener listener 
                         : mouseMotionListeners) {
@@ -176,12 +186,12 @@ public class TextUIWindow extends Canvas {
     }
     
     private int convertPixelXtoCharX(int pixelX) {
-        if (pixelX < this.fontWidth) {
+        if (pixelX < this.fontWidth + this.charDelimiterLength / 2) {
             return 0;
         }
         
-        int w = pixelX - this.fontWidth;
-        return 1 + w / (this.fontWidth + this.charDelimiterLength);
+        int normalizedPixelX = pixelX - fontWidth - charDelimiterLength;
+        return 1 + normalizedPixelX / (fontWidth + charDelimiterLength);
     }
     
     private int convertPixelYtoCharY(int pixelY) {
@@ -189,8 +199,8 @@ public class TextUIWindow extends Canvas {
             return 0;
         }
         
-        int h = pixelY - this.fontWidth - this.windowTitleBorderThickness;
-        return 1 + h / this.fontWidth;
+        int normalizedPixelY = pixelY - fontHeight - windowTitleBorderThickness;
+        return 1 + normalizedPixelY / fontHeight;
     }
     
     public void setTitleBorderThickness(int thickness) {

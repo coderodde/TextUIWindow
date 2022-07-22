@@ -3,6 +3,7 @@ package com.github.coderodde.ui;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -42,9 +43,17 @@ public class TextEditorApp extends Application {
         primaryStage.show();
         
         window.repaint();
+        window.addTextUIWindowMouseListener(new TextEditorMouseListener());
     }
     
     public static void main(String[] args) {
         launch(args);
+    }
+    
+    private static final class TextEditorMouseListener 
+            implements TextUIWindowMouseListener {
+        public void onMouseClick(MouseEvent event, int charX, int charY) {
+            System.out.println("[" + charX + ", " + charY + "]");
+        }
     }
 }
