@@ -8,9 +8,7 @@ import com.sun.javafx.tk.Toolkit;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -90,6 +88,11 @@ public class TextUIWindow extends Canvas {
         setMouseListeners();
         setMouseMotionListeners();
         setKeyboardListeners();
+    }
+    
+    public void turnOffBlink(int charX, int charY) {
+        checkXandY(charX, charY);
+        cursorGrid[charY][charX] = false;
     }
     
     public void setBlinkCursorBackgroundColor(Color backgroundColor) {
@@ -194,18 +197,13 @@ public class TextUIWindow extends Canvas {
     }
     
     private void setKeyboardTypedListener() {
-        this.addEventFilter(KeyEvent.ANY, new EventHandler<KeyEvent>() {
+        this.addEventFilter(KeyEvent.KEY_TYPED, new EventHandler<KeyEvent>() {
             public void handle(KeyEvent event) {
                 for (TextUIWindowKeyboardListener listener : keyboardListeners) {
                     listener.onKeyTyped(event);
                 }
             }
         });
-//        this.setOnKeyTyped(e -> {
-//            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
-//                listener.onKeyTyped(e);
-//            }
-//        });
     }
     
     private void setMouseMovedListener() {
@@ -392,10 +390,12 @@ public class TextUIWindow extends Canvas {
             gc.setFill(foregroundColorGrid[charY][charX]);
         }
         
+        int fixY = fontCharHeight - (int) getFontMetrics().getMaxAscent();
+        
         gc.fillText("" + charGrid[charY][charX],
                     charDelimiterLength / 2 +
                             (fontCharWidth + charDelimiterLength) * charX,
-                    fontCharHeight * (charY + 1));
+                    fontCharHeight * (charY + 1) - fixY);
     }
     
     public Color getForegroundColor(int x, int y) {
@@ -562,7 +562,7 @@ public class TextUIWindow extends Canvas {
     }
     
     private int getFontWidth() {
-        return (int) getFontMetrics().getCharWidth('C') + 5;
+        return (int) getFontMetrics().getCharWidth('C') + charDelimiterLength;
     }
     
     private int getFontHeight() {

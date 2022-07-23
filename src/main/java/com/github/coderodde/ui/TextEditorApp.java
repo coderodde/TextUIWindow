@@ -205,7 +205,19 @@ public class TextEditorApp extends Application {
         
         @Override
         public void onKeyTyped(KeyEvent event) {
+            System.out.println("before = " + event.getCode().getName());
             System.out.println("yeah = " + event.getCharacter());
+            
+            window.printString(cursorX, cursorY, event.getCharacter());
+            moveCursorRight();
+            
+            Platform.runLater(() -> { window.repaint(); });
+            event.consume();
+        }
+        
+        @Override
+        public void onKeyPressed(KeyEvent event) {
+            System.out.println("funky == " + event.getCode().name() + ":" + event.getCode().getName());
             switch (event.getCode()) {
                 case UP:
                     moveCursorUp();
@@ -223,11 +235,6 @@ public class TextEditorApp extends Application {
                     moveCursorDown();
                     break;
             }
-            
-            window.printString(cursorX, cursorY, event.getCharacter());
-            
-            Platform.runLater(() -> { window.repaint(); });
-            event.consume();
         }
         
         private void moveCursorUp() {
@@ -280,6 +287,7 @@ public class TextEditorApp extends Application {
         
         public void onMouseClick(MouseEvent event, int charX, int charY) {
             handle(event, charX, charY);
+            window.turnOffBlink(cursorX, cursorY);
             cursorX = charX;
             cursorY = charY;
         }
