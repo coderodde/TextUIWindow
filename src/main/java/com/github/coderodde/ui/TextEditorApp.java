@@ -3,6 +3,7 @@ package com.github.coderodde.ui;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.input.KeyEvent;
@@ -19,8 +20,8 @@ import javafx.stage.Stage;
  */
 public class TextEditorApp extends Application {
     
-    private static final int CHAR_GRID_WIDTH = 80;
-    private static final int CHAR_GRID_HEIGHT = 48;
+    private static final int CHAR_GRID_WIDTH = 40;
+    private static final int CHAR_GRID_HEIGHT = 24;
     private static final int FONT_SIZE = 17;
     private static final int CHAR_HORIZONTAL_DELIMITER_LENGTH = 1;
     private static final int SLEEP_MILLISECONDS = 400;
@@ -64,30 +65,35 @@ public class TextEditorApp extends Application {
     
     @Override
     public void start(Stage primaryStage) {
-        StackPane root = new StackPane();
-        root.getChildren().add(window);
-        Scene scene = new Scene(root, 
-                                window.getPreferredWidth(), 
-                                window.getPreferredHeight(),
-                                false,
-                                SceneAntialiasing.BALANCED);
-        
-        window.setTitleBorderThickness((int) scene.getY());
-        
-        primaryStage.setScene(scene);
-        helloWorldThread.start();
-        cursorBlinkThread.start();
-        
-        window.setChar(window.getGridWidth() - 1, window.getGridHeight() - 1, '?');
-        window.addTextUIWindowMouseListener(new TextEditorMouseListener());
-        window.addTextUIWindowKeyboardListener(
-                new TextEditorKeyboardListener());
-        
-        window.setChar(79, 47, '?');
-        
-        window.repaint();
-        primaryStage.setResizable(false);
-        primaryStage.show();
+        Platform.runLater(() -> {
+            
+            StackPane root = new StackPane();
+            root.getChildren().add(window);
+            Scene scene = new Scene(root, 
+                                    window.getPreferredWidth(), 
+                                    window.getPreferredHeight(),
+                                    false,
+                                    SceneAntialiasing.BALANCED);
+
+            window.setTitleBorderThickness((int) scene.getY());
+
+            primaryStage.setScene(scene);
+            helloWorldThread.start();
+            cursorBlinkThread.start();
+
+            window.addTextUIWindowMouseListener(new TextEditorMouseListener());
+            window.addTextUIWindowKeyboardListener(
+                    new TextEditorKeyboardListener());
+
+            window.setChar(CHAR_GRID_WIDTH - 1, CHAR_GRID_HEIGHT - 1, '?');
+            window.setForegroundColor(39, 23, Color.RED);
+            window.setBackgroundColor(39, 23, Color.BLACK);
+            window.setChar(39, 23, '!');
+
+            window.repaint();
+            primaryStage.setResizable(false);
+            primaryStage.show();
+        });
     }
     
     public static void main(String[] args) {

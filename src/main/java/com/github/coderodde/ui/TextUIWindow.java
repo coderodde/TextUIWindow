@@ -32,8 +32,8 @@ public class TextUIWindow extends Canvas {
     private final int height;
     private final int fontSize;
     private final Font font;
-    private final int fontWidth;
-    private final int fontHeight;
+    private final int fontCharWidth;
+    private final int fontCharHeight;
     private final int charDelimiterLength;
     private int windowTitleBorderThickness;
     private final Set<TextUIWindowMouseListener> mouseMotionListeners = 
@@ -62,8 +62,8 @@ public class TextUIWindow extends Canvas {
                 checkCharDelimiterLength(charDelimiterLength);
         
         this.font = getFont();
-        this.fontWidth = getFontWidth();
-        this.fontHeight = getFontHeight();
+        this.fontCharWidth = getFontWidth();
+        this.fontCharHeight = getFontHeight();
         
         backgroundColorGrid = new Color[height][width];
         foregroundColorGrid = new Color[height][width];
@@ -73,8 +73,8 @@ public class TextUIWindow extends Canvas {
         setDefaultBackgroundColors();
         setChars();
         
-        this.setWidth(width * (fontWidth + charDelimiterLength));
-        this.setHeight(height * fontHeight);
+        this.setWidth(width * (fontCharWidth + charDelimiterLength));
+        this.setHeight(height * fontCharHeight);
         
         setMouseListeners();
         setMouseMotionListeners();
@@ -275,11 +275,11 @@ public class TextUIWindow extends Canvas {
     }
     
     private int convertPixelXtoCharX(int pixelX) {
-        return pixelX / (fontWidth + charDelimiterLength);
+        return pixelX / (fontCharWidth + charDelimiterLength);
     }
     
     private int convertPixelYtoCharY(int pixelY) {
-        return (pixelY - windowTitleBorderThickness) / fontHeight;
+        return (pixelY - windowTitleBorderThickness) / fontCharHeight;
     }
             
     public void setTitleBorderThickness(int thickness) {
@@ -310,10 +310,10 @@ public class TextUIWindow extends Canvas {
                                        int charY) {
         
         gc.setFill(backgroundColorGrid[charY][charX]);
-        gc.fillRect(charX * (fontWidth + charDelimiterLength),
-                    charY * fontHeight,
-                    fontWidth + charDelimiterLength,
-                    fontHeight);
+        gc.fillRect(charX * (fontCharWidth + charDelimiterLength),
+                    charY * fontCharHeight,
+                    fontCharWidth + charDelimiterLength,
+                    fontCharHeight);
     }
             
     private void repaintCellForeground(GraphicsContext gc,
@@ -324,8 +324,8 @@ public class TextUIWindow extends Canvas {
         
         gc.fillText("" + charGrid[charY][charX],
                     charDelimiterLength / 2 +
-                            (fontWidth + charDelimiterLength) * charX,
-                    fontHeight + (charY + 1));
+                            (fontCharWidth + charDelimiterLength) * charX,
+                    fontCharHeight * (charY + 1));
     }
     
     public Color getForegroundColor(int x, int y) {
@@ -361,11 +361,11 @@ public class TextUIWindow extends Canvas {
     }
     
     public int getPreferredWidth() {
-        return width * fontWidth;
+        return width * (fontCharWidth + charDelimiterLength);
     }
     
     public int getPreferredHeight() {
-        return height * fontHeight;
+        return height * fontCharHeight;
     }
     
     private FontMetrics getFontMetrics() {
