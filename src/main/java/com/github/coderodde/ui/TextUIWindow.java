@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import javafx.event.EventHandler;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.text.FontWeight;
 
@@ -24,6 +25,8 @@ public class TextUIWindow extends Canvas {
     private static final int MINIMUM_FONT_SIZE = 1;
     private static final Color DEFAULT_BACKGROUND_COLOR = Color.BLACK;
     private static final Color DEFAULT_FOREGROUND_COLOR = Color.WHITE;
+    private static final Color DEFAULT_BLINK_BACKGROUND_COLOR = Color.WHITE;
+    private static final Color DEFAULT_BLINK_FOREGROUND_COLOR = Color.BLACK;
     private static final char DEFAULT_CHAR = ' ';
     private static final String FONT_NAME = "Monospaced";
     private static final int DEFAULT_CHAR_DELIMITER_LENGTH = 4;
@@ -44,7 +47,10 @@ public class TextUIWindow extends Canvas {
     
     private final Color[][] backgroundColorGrid;
     private final Color[][] foregroundColorGrid;
+    private final boolean[][] cursorGrid;
     private final char[][] charGrid;
+    private Color blinkCursorBackgroundColor = DEFAULT_BLINK_BACKGROUND_COLOR;
+    private Color blinkCursorForegroundColor = DEFAULT_BLINK_FOREGROUND_COLOR;
     
     public TextUIWindow(int width, int height, int fontSize) {
         this(width, height, fontSize, DEFAULT_CHAR_DELIMITER_LENGTH);
@@ -68,6 +74,7 @@ public class TextUIWindow extends Canvas {
         backgroundColorGrid = new Color[height][width];
         foregroundColorGrid = new Color[height][width];
         charGrid = new char[height][width];
+        cursorGrid = new boolean[height][width];
         
         setDefaultForegroundColors();
         setDefaultBackgroundColors();
@@ -81,12 +88,36 @@ public class TextUIWindow extends Canvas {
         setKeyboardListeners();
     }
     
+    public void setBlinkCursorBackgroundColor(Color backgroundColor) {
+        this.blinkCursorBackgroundColor =
+                Objects.requireNonNull(
+                        backgroundColor, 
+                        "backgroundColor is null.");
+    }
+    
+    public void setBlinkCursorForegroundColor(Color foregroundColor) {
+        this.blinkCursorBackgroundColor =
+                Objects.requireNonNull(
+                        foregroundColor, 
+                        "foregroundColor is null.");
+    }
+    
     public int getGridWidth() {
         return width;
     }
     
     public int getGridHeight() {
         return height;
+    }
+    
+    public void toggleBlinkCursor(int charX, int charY) {
+        checkXandY(charX, charY);
+        cursorGrid[charY][charX] = !cursorGrid[charY][charX];
+    }
+    
+    public boolean readCursorStatus(int charX, int charY) {
+        checkXandY(charX, charY);
+        return cursorGrid[charY][charX];
     }
     
     public void printString(int charX, int charY, String text) {
@@ -129,18 +160,36 @@ public class TextUIWindow extends Canvas {
     }
     
     private void setKeyboardListeners() {
-        this.setOnKeyPressed(e -> {
-            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
-                listener.onKeyPressed(e);
+        setKeyboardPressedListener();
+        setKeyboardReleaseListener();
+        setKeyboardTypedListener();
+    }
+    
+    private void setKeyboardPressedListener() {
+        this.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                for (TextUIWindowKeyboardListener listener 
+                        : keyboardListeners) {
+                    listener.onKeyPressed(event);
+                }
             }
         });
-        
-        this.setOnKeyReleased(e -> {
-            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
-                listener.onKeyReleased(e);
+    }
+    
+    private void setKeyboardReleaseListener() {
+        this.setOnKeyReleased(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                for (TextUIWindowKeyboardListener listener 
+                        : keyboardListeners) {
+                    listener.onKeyReleased(event);
+                }
             }
         });
-        
+    }
+    
+    private void setKeyboardTypedListener() {
         this.setOnKeyTyped(e -> {
             for (TextUIWindowKeyboardListener listener : keyboardListeners) {
                 listener.onKeyTyped(e);
@@ -301,15 +350,20 @@ public class TextUIWindow extends Canvas {
     }
     
     private void repaintCell(GraphicsContext gc, int x, int y) {
-        repaintCellBackground(gc, x, y);
+            repaintCellBackground(gc, x, y);
         repaintCellForeground(gc, x, y);
     }
     
     private void repaintCellBackground(GraphicsContext gc,  
                                        int charX, 
                                        int charY) {
+        if (cursorGrid[charY][charX]) {
+            // Once here, we need to use the cursor's color:
+            gc.setFill(blinkCursorBackgroundColor);
+        } else {
+            gc.setFill(backgroundColorGrid[charY][charX]);
+        }
         
-        gc.setFill(backgroundColorGrid[charY][charX]);
         gc.fillRect(charX * (fontCharWidth + charDelimiterLength),
                     charY * fontCharHeight,
                     fontCharWidth + charDelimiterLength,
@@ -320,7 +374,12 @@ public class TextUIWindow extends Canvas {
                                        int charX, 
                                        int charY) {
         gc.setFont(font);
-        gc.setFill(foregroundColorGrid[charY][charX]);
+        
+        if (cursorGrid[charY][charX]) {
+            gc.setFill(blinkCursorForegroundColor);
+        } else {
+            gc.setFill(foregroundColorGrid[charY][charX]);
+        }
         
         gc.fillText("" + charGrid[charY][charX],
                     charDelimiterLength / 2 +

@@ -33,6 +33,10 @@ public class TextEditorApp extends Application {
     
     private volatile int cursorX = 0;
     private volatile int cursorY = 2;
+    private volatile int previousCursorX;
+    private volatile int previousCursorY;
+    private volatile Color previousForegroundColor;
+    private volatile Color previousBackgroundColor;
 
     public TextEditorApp() {
         this.window = new TextUIWindow(CHAR_GRID_WIDTH,
@@ -47,14 +51,13 @@ public class TextEditorApp extends Application {
     @Override
     public void stop() {
         helloWorldThread.requestExit();
+        cursorBlinkThread.requestExit();
         
         try {
             helloWorldThread.join();
         } catch (InterruptedException ex) {
             
         }
-
-        cursorBlinkThread.requestExit();
         
         try {
             cursorBlinkThread.join();
@@ -67,32 +70,45 @@ public class TextEditorApp extends Application {
     public void start(Stage primaryStage) {
         Platform.runLater(() -> {
             
-            StackPane root = new StackPane();
-            root.getChildren().add(window);
-            Scene scene = new Scene(root, 
-                                    window.getPreferredWidth(), 
-                                    window.getPreferredHeight(),
-                                    false,
-                                    SceneAntialiasing.BALANCED);
+            try {
+                StackPane root = new StackPane();
+                root.getChildren().add(window);
+                Scene scene = new Scene(root, 
+                                        window.getPreferredWidth(), 
+                                        window.getPreferredHeight(),
+                                        false,
+                                        SceneAntialiasing.BALANCED);
 
-            window.setTitleBorderThickness((int) scene.getY());
+                window.setTitleBorderThickness((int) scene.getY());
 
-            primaryStage.setScene(scene);
-            helloWorldThread.start();
-            cursorBlinkThread.start();
-
-            window.addTextUIWindowMouseListener(new TextEditorMouseListener());
-            window.addTextUIWindowKeyboardListener(
-                    new TextEditorKeyboardListener());
-
-            window.setChar(CHAR_GRID_WIDTH - 1, CHAR_GRID_HEIGHT - 1, '?');
-            window.setForegroundColor(39, 23, Color.RED);
-            window.setBackgroundColor(39, 23, Color.BLACK);
-            window.setChar(39, 23, '!');
-
-            window.repaint();
-            primaryStage.setResizable(false);
-            primaryStage.show();
+                primaryStage.setScene(scene);
+                window.addTextUIWindowMouseListener(new TextEditorMouseListener());
+                window.addTextUIWindowKeyboardListener(
+                        new TextEditorKeyboardListener());
+                
+                helloWorldThread.start();
+                cursorBlinkThread.start();
+                
+                window.repaint();
+                primaryStage.setResizable(false);
+                primaryStage.show();
+            } catch (Exception ex) {
+                System.err.println("Something failed.");
+                helloWorldThread.requestExit();
+                cursorBlinkThread.requestExit();
+                
+//                try {
+//                    helloWorldThread.join();
+//                } catch (InterruptedException ex2) {
+//                    
+//                }
+//                
+//                try {
+//                    cursorBlinkThread.join();
+//                } catch (InterruptedException ex2) {
+//                    
+//                }
+            }
         });
     }
     
@@ -103,43 +119,26 @@ public class TextEditorApp extends Application {
     private final class CursorBlinkThread extends Thread {
         
         private static final long CURSOR_BLINK_SLEEP = 600L;
-        private static final Color CURSOR_BLINK_FOREGROUND = Color.RED;
-        private static final Color CURSOR_BLINK_BACKGROUND = Color.WHITE;
-        private static final Color CURSOR_CLEAR_FOREGROUND = Color.BLACK;
-        private static final Color CURSOR_CLEAR_BACKGROUND = Color.WHITE;
         
         private volatile boolean doRun = true;
-        private boolean cursorBlinkOn = false;
         
         @Override
         public void run() {
             while (doRun) {
                 try {
-                    Thread.sleep(CURSOR_BLINK_SLEEP);
+                    for (int i = 0; i < 10; i++) {
+                        Thread.sleep(CURSOR_BLINK_SLEEP / 10);
+                        
+                        if (!doRun) {
+                            return;
+                        }
+                    }
                 } catch (InterruptedException ex) {
                     
                 }
                 
-                if (cursorBlinkOn) {
-                    window.setForegroundColor(cursorX, 
-                                              cursorY,
-                                              CURSOR_BLINK_FOREGROUND);
-                    
-                    window.setBackgroundColor(cursorX, 
-                                              cursorY, 
-                                              CURSOR_BLINK_BACKGROUND);
-                } else {
-                    window.setForegroundColor(cursorX, 
-                                              cursorY,
-                                              CURSOR_CLEAR_FOREGROUND);
-                    
-                    window.setBackgroundColor(cursorX, 
-                                              cursorY, 
-                                              CURSOR_CLEAR_BACKGROUND);
-                }
-                
+                window.toggleBlinkCursor(cursorX, cursorY);
                 window.repaint();
-                cursorBlinkOn = !cursorBlinkOn;
             }
         }
         
@@ -218,7 +217,8 @@ public class TextEditorApp extends Application {
             }
             
             window.printString(cursorX, cursorY, event.getCharacter());
-            window.repaint();
+            
+            Platform.runLater(() -> { window.repaint(); });
             event.consume();
         }
         
@@ -228,22 +228,33 @@ public class TextEditorApp extends Application {
             }
             
             cursorY--;
+            Platform.runLater(() -> { window.repaint(); });
         }
         
         private void moveCursorLeft() {
             if (cursorX == 0) {
-                return;
+                if (cursorY > 2) {
+                    cursorY--;
+                    cursorX = window.getGridWidth() - 1;
+                }
+            } else {
+                cursorX--;
             }
             
-            cursorX--;
+            Platform.runLater(() -> { window.repaint(); });
         }
         
         private void moveCursorRight() {
             if (cursorX == window.getGridWidth() - 1) {
-                return;
+                if (cursorY < window.getGridHeight() - 1) {
+                    cursorY++;
+                    cursorX = 0;
+                }
+            } else {
+                cursorX++;
             }
             
-            cursorX++;
+            Platform.runLater(() -> { window.repaint(); });
         }
         
         private void moveCursorDown() {
@@ -252,6 +263,7 @@ public class TextEditorApp extends Application {
             }
             
             cursorY++;
+            Platform.runLater(() -> { window.repaint(); });
         }
     }
     
