@@ -97,17 +97,17 @@ public class TextEditorApp extends Application {
                 helloWorldThread.requestExit();
                 cursorBlinkThread.requestExit();
                 
-//                try {
-//                    helloWorldThread.join();
-//                } catch (InterruptedException ex2) {
-//                    
-//                }
-//                
-//                try {
-//                    cursorBlinkThread.join();
-//                } catch (InterruptedException ex2) {
-//                    
-//                }
+                try {
+                    helloWorldThread.join();
+                } catch (InterruptedException ex2) {
+                    
+                }
+                
+                try {
+                    cursorBlinkThread.join();
+                } catch (InterruptedException ex2) {
+                    
+                }
             }
         });
     }
@@ -138,7 +138,8 @@ public class TextEditorApp extends Application {
                 }
                 
                 window.toggleBlinkCursor(cursorX, cursorY);
-                window.repaint();
+                
+                Platform.runLater(() -> { window.repaint(); });
             }
         }
         
@@ -169,7 +170,13 @@ public class TextEditorApp extends Application {
             
             while (doRun) {
                 try {
-                    Thread.sleep(SLEEP_MILLISECONDS);
+                    for (int i = 0; i < 10; i++) {
+                        Thread.sleep(SLEEP_MILLISECONDS / 10);
+                        
+                        if (!doRun) {
+                            return;
+                        }
+                    }
                 } catch (InterruptedException ex) {
                     return;
                 }
@@ -178,7 +185,8 @@ public class TextEditorApp extends Application {
                 window.printString(xOffset, 0, text);
                 Character ch = characterList.remove(0);
                 characterList.add(ch);
-                window.repaint();
+                
+                Platform.runLater(() -> { window.repaint(); });
             }
         }
         

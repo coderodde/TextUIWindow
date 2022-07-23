@@ -8,7 +8,9 @@ import com.sun.javafx.tk.Toolkit;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -82,6 +84,8 @@ public class TextUIWindow extends Canvas {
         
         this.setWidth(width * (fontCharWidth + charDelimiterLength));
         this.setHeight(height * fontCharHeight);
+        this.setFocusTraversable(true);
+        this.addEventFilter(MouseEvent.ANY, (e) -> this.requestFocus());
         
         setMouseListeners();
         setMouseMotionListeners();
@@ -190,11 +194,18 @@ public class TextUIWindow extends Canvas {
     }
     
     private void setKeyboardTypedListener() {
-        this.setOnKeyTyped(e -> {
-            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
-                listener.onKeyTyped(e);
+        this.addEventFilter(KeyEvent.ANY, new EventHandler<KeyEvent>() {
+            public void handle(KeyEvent event) {
+                for (TextUIWindowKeyboardListener listener : keyboardListeners) {
+                    listener.onKeyTyped(event);
+                }
             }
         });
+//        this.setOnKeyTyped(e -> {
+//            for (TextUIWindowKeyboardListener listener : keyboardListeners) {
+//                listener.onKeyTyped(e);
+//            }
+//        });
     }
     
     private void setMouseMovedListener() {
