@@ -15,8 +15,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.text.FontWeight;
 
 /**
- *
- * @author rodde
+ * This class implements a simple colorful terminal window.
+ * 
+ * @author Rodion "rodde" Efremov
+ * @version 1.6 (Jul 24, 2022)
+ * @since 1.6 (Jul 24, 2022)
  */
 public class TextUIWindow extends Canvas {
     

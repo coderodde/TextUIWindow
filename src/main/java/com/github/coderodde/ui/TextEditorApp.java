@@ -9,14 +9,14 @@ import javafx.scene.SceneAntialiasing;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
+ * This class implements a simple demo text editor.
  * 
  * @author Rodion "rodde" Efremov
- * @version 1.6 ()
- * @since 1.6 ()
+ * @version 1.6 (Jul 14, 2022)
+ * @since 1.6 (Jul 14, 2022)
  */
 public class TextEditorApp extends Application {
     
@@ -33,10 +33,6 @@ public class TextEditorApp extends Application {
     
     private volatile int cursorX = 0;
     private volatile int cursorY = 2;
-    private volatile int previousCursorX;
-    private volatile int previousCursorY;
-    private volatile Color previousForegroundColor;
-    private volatile Color previousBackgroundColor;
 
     public TextEditorApp() {
         this.window = new TextUIWindow(CHAR_GRID_WIDTH,
@@ -93,7 +89,7 @@ public class TextEditorApp extends Application {
                 primaryStage.setResizable(false);
                 primaryStage.show();
             } catch (Exception ex) {
-                System.err.println("Something failed.");
+                ex.printStackTrace();
                 helloWorldThread.requestExit();
                 cursorBlinkThread.requestExit();
                 
@@ -114,6 +110,56 @@ public class TextEditorApp extends Application {
     
     public static void main(String[] args) {
         launch(args);
+    }
+    
+    private void moveCursorUp() {
+        if (cursorY == 2) {
+            return;
+        }
+
+        window.turnOffBlink(cursorX, cursorY);
+        cursorY--;
+        Platform.runLater(() -> { window.repaint(); });
+    }
+
+    private void moveCursorLeft() {
+        if (cursorX == 0) {
+            if (cursorY > 2) {
+                window.turnOffBlink(cursorX, cursorY);
+                cursorY--;
+                cursorX = window.getGridWidth() - 1;
+                Platform.runLater(() -> { window.repaint(); });
+            }
+        } else {
+            window.turnOffBlink(cursorX, cursorY);
+            cursorX--;
+            Platform.runLater(() -> { window.repaint(); });
+        }
+    }
+
+    private void moveCursorRight() {
+        if (cursorX == window.getGridWidth() - 1) {
+            if (cursorY < window.getGridHeight() - 1) {
+                window.turnOffBlink(cursorX, cursorY);
+                cursorY++;
+                cursorX = 0;
+                Platform.runLater(() -> { window.repaint(); });
+            }
+        } else {
+            window.turnOffBlink(cursorX, cursorY);
+            cursorX++;
+            Platform.runLater(() -> { window.repaint(); });
+        }
+    }
+
+    private void moveCursorDown() {
+        if (cursorY == window.getGridHeight() - 1) {
+            return;
+        }
+
+        window.turnOffBlink(cursorX, cursorY);
+        cursorY++;
+        Platform.runLater(() -> { window.repaint(); });
     }
     
     private final class CursorBlinkThread extends Thread {
@@ -205,9 +251,7 @@ public class TextEditorApp extends Application {
         
         @Override
         public void onKeyTyped(KeyEvent event) {
-            System.out.println("before = " + event.getCode().getName());
-            System.out.println("yeah = " + event.getCharacter());
-            
+            window.turnOffBlink(cursorX, cursorY);
             window.printString(cursorX, cursorY, event.getCharacter());
             moveCursorRight();
             
@@ -217,7 +261,6 @@ public class TextEditorApp extends Application {
         
         @Override
         public void onKeyPressed(KeyEvent event) {
-            System.out.println("funky == " + event.getCode().name() + ":" + event.getCode().getName());
             switch (event.getCode()) {
                 case UP:
                     moveCursorUp();
@@ -236,88 +279,15 @@ public class TextEditorApp extends Application {
                     break;
             }
         }
-        
-        private void moveCursorUp() {
-            if (cursorY == 2) {
-                return;
-            }
-            
-            cursorY--;
-            Platform.runLater(() -> { window.repaint(); });
-        }
-        
-        private void moveCursorLeft() {
-            if (cursorX == 0) {
-                if (cursorY > 2) {
-                    cursorY--;
-                    cursorX = window.getGridWidth() - 1;
-                }
-            } else {
-                cursorX--;
-            }
-            
-            Platform.runLater(() -> { window.repaint(); });
-        }
-        
-        private void moveCursorRight() {
-            if (cursorX == window.getGridWidth() - 1) {
-                if (cursorY < window.getGridHeight() - 1) {
-                    cursorY++;
-                    cursorX = 0;
-                }
-            } else {
-                cursorX++;
-            }
-            
-            Platform.runLater(() -> { window.repaint(); });
-        }
-        
-        private void moveCursorDown() {
-            if (cursorY == window.getGridHeight() - 1) {
-                return;
-            }
-            
-            cursorY++;
-            Platform.runLater(() -> { window.repaint(); });
-        }
     }
     
     private final class TextEditorMouseListener 
             implements TextUIWindowMouseListener {
         
         public void onMouseClick(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
             window.turnOffBlink(cursorX, cursorY);
             cursorX = charX;
             cursorY = charY;
-        }
-        
-        public void onMouseEntered(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-
-        public void onMouseExited(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-
-        public void onMousePressed(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-
-        public void onMouseReleased(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-
-        public void onMouseMove(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-
-        public void onMouseDragged(MouseEvent event, int charX, int charY) {
-            handle(event, charX, charY);
-        }
-        
-        private void handle(MouseEvent event, int charX, int charY) {
-            System.out.println("[" + charX + ", " + charY + "]");
         }
     }
 }
