@@ -62,9 +62,9 @@ public class TextUIWindow extends Canvas {
     }
     
     public TextUIWindow(int width, 
-                     int height, 
-                     int fontSize, 
-                     int charDelimiterLength) {
+                        int height, 
+                        int fontSize, 
+                        int charDelimiterLength) {
         
         this.width = checkWidth(width);
         this.height = checkHeight(height);
@@ -95,6 +95,22 @@ public class TextUIWindow extends Canvas {
         setKeyboardListeners();
     }
     
+    public Color getTextForegroundColor() {
+        return textForegroundColor;
+    }
+    
+    public Color getTextBackgroundColor() {
+        return textBackgroundColor;
+    }
+    
+    public Color getBlinkCursorForegroundColor() {
+        return blinkCursorForegroundColor;
+    }
+    
+    public Color getBlinkCursorBackgroundColor() {
+        return blinkCursorBackgroundColor;
+    }
+    
     public void setForegroundColor(Color color) {
         textForegroundColor = 
                 Objects.requireNonNull(color, "The input color is null.");
@@ -106,8 +122,9 @@ public class TextUIWindow extends Canvas {
     }
     
     public void turnOffBlink(int charX, int charY) {
-        checkXandY(charX, charY);
-        cursorGrid[charY][charX] = false;
+        if (checkXandY(charX, charY)) {
+            cursorGrid[charY][charX] = false;
+        }
     }
     
     public void setBlinkCursorBackgroundColor(Color backgroundColor) {
@@ -145,12 +162,20 @@ public class TextUIWindow extends Canvas {
     }
     
     public void toggleBlinkCursor(int charX, int charY) {
-        checkXandY(charX, charY);
-        cursorGrid[charY][charX] = !cursorGrid[charY][charX];
+        if (checkXandY(charX, charY)) {
+            cursorGrid[charY][charX] = !cursorGrid[charY][charX];
+        }
     }
     
     public boolean readCursorStatus(int charX, int charY) {
-        checkXandY(charX, charY);
+        if (!checkX(charX)) {
+            throw charXToException(charX);
+        }
+        
+        if (!checkY(charY)) {
+            throw charYToException(charY);
+        }
+        
         return cursorGrid[charY][charX];
     }
     
@@ -163,6 +188,8 @@ public class TextUIWindow extends Canvas {
             setChar(charX + i, charY, text.charAt(i));
             
             if (!checkX(charX + i)) {
+                // Once here, the input text string proceeds beyond the right
+                // border. Nothing to print, can exit.
                 return;
             }
         }
@@ -394,7 +421,7 @@ public class TextUIWindow extends Canvas {
     }
     
     private void repaintCell(GraphicsContext gc, int x, int y) {
-            repaintCellBackground(gc, x, y);
+        repaintCellBackground(gc, x, y);
         repaintCellForeground(gc, x, y);
     }
     
@@ -433,31 +460,54 @@ public class TextUIWindow extends Canvas {
                     fontCharHeight * (charY + 1) - fixY);
     }
     
-    public Color getForegroundColor(int x, int y) {
-        checkXandY(x, y);
-        return foregroundColorGrid[y][x];
+    public Color getForegroundColor(int charX, int charY) {
+        if (!checkX(charX)) {
+            throw charXToException(charX);
+        }
+        
+        if (!checkY(charY)) {
+            throw charYToException(charY);
+        }
+        
+        return foregroundColorGrid[charY][charX];
     }
     
-    public Color getBackgroundColor(int x, int y) {
-        checkXandY(x, y);
-        return backgroundColorGrid[y][x];
+    public Color getBackgroundColor(int charX, int charY) {
+        if (!checkX(charX)) {
+            throw charXToException(charX);
+        }
+        
+        if (!checkY(charY)) {
+            throw charYToException(charY);
+        }
+        
+        return backgroundColorGrid[charY][charX];
     }
     
-    public void setForegroundColor(int x, int y, Color color) {
-        checkXandY(x, y);
-        foregroundColorGrid[y][x] = 
-                Objects.requireNonNull(color, "The color is null.");
+    public void setForegroundColor(int charX, int charY, Color color) {
+        if (checkXandY(charX, charY)) {
+            foregroundColorGrid[charY][charX] = 
+                    Objects.requireNonNull(color, "The color is null.");
+        }
     }
     
     public void setBackgroundColor(int x, int y, Color color) {
-        checkXandY(x, y);
-        backgroundColorGrid[y][x] = 
-                Objects.requireNonNull(color, "The color is null.");
+        if (checkXandY(x, y)) {
+            backgroundColorGrid[y][x] = 
+                    Objects.requireNonNull(color, "The color is null.");
+        }
     }
     
-    public char getChar(int x, int y) {
-        checkXandY(x, y);
-        return charGrid[y][x];
+    public char getChar(int charX, int charY) {
+        if (!checkX(charX)) {
+            throw charXToException(charX);
+        }
+        
+        if (!checkY(charY)) {
+            throw charYToException(charY);
+        }
+        
+        return charGrid[charY][charX];
     }
     
     public void setChar(int x, int y, char ch) {
@@ -528,6 +578,42 @@ public class TextUIWindow extends Canvas {
         }
         
         return charDelimiterLength;
+    }
+    
+    private IndexOutOfBoundsException charXToException(int charX) {
+        if (charX < 0) {
+            return new IndexOutOfBoundsException(
+                    "Character X coordinate is negative: " + charX);
+        }
+        
+        if (charX >= width) {
+            return new IndexOutOfBoundsException(
+                    "Character X coordinate is too large: " 
+                            + charX
+                            + ". Must be at most "
+                            + (width - 1)
+                            + ".");
+        }
+        
+        throw new IllegalStateException("Should not get here.");
+    }
+    
+    private IndexOutOfBoundsException charYToException(int charY) {
+        if (charY < 0) {
+            throw new IndexOutOfBoundsException(
+                    "Character Y coordinate is negative: " + charY);
+        }
+        
+        if (charY >= height) {
+            throw new IndexOutOfBoundsException(
+                    "Character Y coordinate is too large: " 
+                            + charY
+                            + ". Must be at most "
+                            + (height - 1)
+                            + ".");
+        }
+        
+        throw new IllegalStateException("Should not get here.");
     }
     
     private boolean checkX(int x) {

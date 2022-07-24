@@ -13,6 +13,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -71,54 +72,62 @@ public class TextEditorApp extends Application {
         Platform.runLater(() -> {
             
             try {
-                ColorPicker textForegroundColorPicker = new ColorPicker();
-                ColorPicker textBackgroundColorPicker = new ColorPicker();
-                ColorPicker cursorForegroundColorPicker = new ColorPicker();
-                ColorPicker cursorBackgroundColorPicker = new ColorPicker();
+                ColorPicker textForegroundColorPicker = 
+                        new ColorPicker(window.getTextForegroundColor());
+                
+                ColorPicker textBackgroundColorPicker = 
+                        new ColorPicker(window.getTextBackgroundColor());
+                
+                ColorPicker cursorBlinkForegroundColorPicker = 
+                        new ColorPicker(window.getBlinkCursorForegroundColor());
+                
+                ColorPicker cursorBlinkBackgroundColorPicker =
+                        new ColorPicker(window.getBlinkCursorBackgroundColor());
                 
                 textForegroundColorPicker.setOnAction(new EventHandler() {
                     @Override
                     public void handle(Event t) {
-                        window.setTextForegroundColor(
-                                textForegroundColorPicker.getValue());
+                        Color color = textForegroundColorPicker.getValue();
+                        window.setTextForegroundColor(color);
+                        window.setForegroundColor(cursorX, cursorY, color);
                     }
                 });
                 
                 textBackgroundColorPicker.setOnAction(new EventHandler() {
                     @Override
                     public void handle(Event t) {
-                        window.setTextBackgroundColor(
-                                textBackgroundColorPicker.getValue());
+                        Color color = textBackgroundColorPicker.getValue();
+                        window.setTextBackgroundColor(color);
+                        window.setBackgroundColor(cursorX, cursorY, color);
                     }
                 });
                 
-                cursorForegroundColorPicker.setOnAction(new EventHandler() {
+                cursorBlinkForegroundColorPicker.setOnAction(new EventHandler() {
                     @Override
                     public void handle(Event t) {
                         window.setBlinkCursorForegroundColor(
-                                cursorForegroundColorPicker.getValue());
+                                cursorBlinkForegroundColorPicker.getValue());
                     }
                 });
                 
-                cursorBackgroundColorPicker.setOnAction(new EventHandler() {
+                cursorBlinkBackgroundColorPicker.setOnAction(new EventHandler() {
                     @Override
                     public void handle(Event t) {
                         window.setBlinkCursorBackgroundColor(
-                                cursorBackgroundColorPicker.getValue());
+                                cursorBlinkBackgroundColorPicker.getValue());
                     }
                 });
                 
                 HBox hboxColorPickers = new HBox(textForegroundColorPicker,
                                                  textBackgroundColorPicker,
-                                                 cursorForegroundColorPicker,
-                                                 cursorBackgroundColorPicker);
+                                                 cursorBlinkForegroundColorPicker,
+                                                 cursorBlinkBackgroundColorPicker);
                 
                 VBox vbox = new VBox(hboxColorPickers, window);
+                
                 Scene scene = new Scene(vbox, 
                                         window.getPreferredWidth(), 
-                                        window.getPreferredHeight() + 
-                                                textBackgroundColorPicker
-                                                        .getHeight(),
+                                        window.getPreferredHeight() + 35, // How to get rid of this 35?
                                         false,
                                         SceneAntialiasing.BALANCED);
                 
@@ -326,6 +335,8 @@ public class TextEditorApp extends Application {
                     moveCursorDown();
                     break;
             }
+            
+            event.consume();
         }
     }
     
