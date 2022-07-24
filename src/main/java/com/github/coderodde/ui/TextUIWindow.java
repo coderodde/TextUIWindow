@@ -26,8 +26,8 @@ public class TextUIWindow extends Canvas {
     private static final int MINIMUM_WIDTH = 1;
     private static final int MINIMUM_HEIGHT = 1;
     private static final int MINIMUM_FONT_SIZE = 1;
-    private static final Color DEFAULT_BACKGROUND_COLOR = Color.BLACK;
-    private static final Color DEFAULT_FOREGROUND_COLOR = Color.WHITE;
+    private static final Color DEFAULT_TEXT_BACKGROUND_COLOR = Color.BLACK;
+    private static final Color DEFAULT_TEXT_FOREGROUND_COLOR = Color.WHITE;
     private static final Color DEFAULT_BLINK_BACKGROUND_COLOR = Color.WHITE;
     private static final Color DEFAULT_BLINK_FOREGROUND_COLOR = Color.BLACK;
     private static final char DEFAULT_CHAR = ' ';
@@ -52,6 +52,8 @@ public class TextUIWindow extends Canvas {
     private final Color[][] foregroundColorGrid;
     private final boolean[][] cursorGrid;
     private final char[][] charGrid;
+    private Color textBackgroundColor = DEFAULT_TEXT_BACKGROUND_COLOR;
+    private Color textForegroundColor = DEFAULT_TEXT_FOREGROUND_COLOR;
     private Color blinkCursorBackgroundColor = DEFAULT_BLINK_BACKGROUND_COLOR;
     private Color blinkCursorForegroundColor = DEFAULT_BLINK_FOREGROUND_COLOR;
     
@@ -93,6 +95,16 @@ public class TextUIWindow extends Canvas {
         setKeyboardListeners();
     }
     
+    public void setForegroundColor(Color color) {
+        textForegroundColor = 
+                Objects.requireNonNull(color, "The input color is null.");
+    }
+    
+    public void setBackgroundColor(Color color) {
+        textBackgroundColor = 
+                Objects.requireNonNull(color, "The input color is null.");
+    }
+    
     public void turnOffBlink(int charX, int charY) {
         checkXandY(charX, charY);
         cursorGrid[charY][charX] = false;
@@ -106,10 +118,22 @@ public class TextUIWindow extends Canvas {
     }
     
     public void setBlinkCursorForegroundColor(Color foregroundColor) {
-        this.blinkCursorBackgroundColor =
+        this.blinkCursorForegroundColor =
                 Objects.requireNonNull(
                         foregroundColor, 
                         "foregroundColor is null.");
+    }
+    
+    public void setTextBackgroundColor(Color backgroundColor) {
+        this.textBackgroundColor =
+                Objects.requireNonNull(backgroundColor, 
+                                       "The input color is null.");
+    }
+    
+    public void setTextForegroundColor(Color foregroundColor) {
+        this.textForegroundColor =
+                Objects.requireNonNull(foregroundColor, 
+                                       "The input color is null.");
     }
     
     public int getGridWidth() {
@@ -131,8 +155,16 @@ public class TextUIWindow extends Canvas {
     }
     
     public void printString(int charX, int charY, String text) {
+        if (!checkY(charY)) {
+            return;
+        }
+        
         for (int i = 0; i < text.length(); ++i) {
             setChar(charX + i, charY, text.charAt(i));
+            
+            if (!checkX(charX + i)) {
+                return;
+            }
         }
     }
     
@@ -429,8 +461,11 @@ public class TextUIWindow extends Canvas {
     }
     
     public void setChar(int x, int y, char ch) {
-        checkXandY(x, y);
-        charGrid[y][x] = ch;
+        if (checkXandY(x, y)) {
+            charGrid[y][x] = ch;
+            foregroundColorGrid[y][x] = textForegroundColor;
+            backgroundColorGrid[y][x] = textBackgroundColor;
+        }
     }
     
     public int getPreferredWidth() {
@@ -495,51 +530,22 @@ public class TextUIWindow extends Canvas {
         return charDelimiterLength;
     }
     
-    private void checkX(int x) {
-        if (x < 0) {
-            throw new IndexOutOfBoundsException(
-                    "The x-coordinate (" 
-                            + x 
-                            + ") is negaive. Must be at least 0.");
-        }
-        
-        if (x >= width) {
-            throw new IndexOutOfBoundsException(
-                    "The x-coordinate (" 
-                            + x
-                            + ") is too large. Must be at most " 
-                            + (width - 1) 
-                            + ".");
-        }
+    private boolean checkX(int x) {
+        return x >= 0 && x < width;
     }
     
-    private void checkY(int y) {
-        if (y < 0) {
-            throw new IndexOutOfBoundsException(
-                    "The y-coordinate (" 
-                            + y 
-                            + ") is negaive. Must be at least 0.");
-        }
-        
-        if (y >= height) {
-            throw new IndexOutOfBoundsException(
-                    "The y-coordinate (" 
-                            + y
-                            + ") is too large. Must be at most " 
-                            + (height - 1) 
-                            + ".");
-        }
+    private boolean checkY(int y) {
+        return y >= 0 && y < height;
     }
     
-    private void checkXandY(int x, int y) {
-        checkX(x);
-        checkY(y);
+    private boolean checkXandY(int x, int y) {
+        return checkX(x) && checkY(y);
     }
     
     private void setDefaultForegroundColors() {
         for (Color[] colors : foregroundColorGrid) {
             for (int i = 0; i < width; i++) {
-                colors[i] = DEFAULT_FOREGROUND_COLOR;
+                colors[i] = DEFAULT_TEXT_FOREGROUND_COLOR;
             }
         }
     }
@@ -547,7 +553,7 @@ public class TextUIWindow extends Canvas {
     private void setDefaultBackgroundColors() {
         for (Color[] colors : backgroundColorGrid) {
             for (int i = 0; i < width; i++) {
-                colors[i] = DEFAULT_BACKGROUND_COLOR;
+                colors[i] = DEFAULT_TEXT_BACKGROUND_COLOR;
             }
         }
     }

@@ -4,11 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
@@ -67,14 +71,57 @@ public class TextEditorApp extends Application {
         Platform.runLater(() -> {
             
             try {
-                StackPane root = new StackPane();
-                root.getChildren().add(window);
-                Scene scene = new Scene(root, 
+                ColorPicker textForegroundColorPicker = new ColorPicker();
+                ColorPicker textBackgroundColorPicker = new ColorPicker();
+                ColorPicker cursorForegroundColorPicker = new ColorPicker();
+                ColorPicker cursorBackgroundColorPicker = new ColorPicker();
+                
+                textForegroundColorPicker.setOnAction(new EventHandler() {
+                    @Override
+                    public void handle(Event t) {
+                        window.setTextForegroundColor(
+                                textForegroundColorPicker.getValue());
+                    }
+                });
+                
+                textBackgroundColorPicker.setOnAction(new EventHandler() {
+                    @Override
+                    public void handle(Event t) {
+                        window.setTextBackgroundColor(
+                                textBackgroundColorPicker.getValue());
+                    }
+                });
+                
+                cursorForegroundColorPicker.setOnAction(new EventHandler() {
+                    @Override
+                    public void handle(Event t) {
+                        window.setBlinkCursorForegroundColor(
+                                cursorForegroundColorPicker.getValue());
+                    }
+                });
+                
+                cursorBackgroundColorPicker.setOnAction(new EventHandler() {
+                    @Override
+                    public void handle(Event t) {
+                        window.setBlinkCursorBackgroundColor(
+                                cursorBackgroundColorPicker.getValue());
+                    }
+                });
+                
+                HBox hboxColorPickers = new HBox(textForegroundColorPicker,
+                                                 textBackgroundColorPicker,
+                                                 cursorForegroundColorPicker,
+                                                 cursorBackgroundColorPicker);
+                
+                VBox vbox = new VBox(hboxColorPickers, window);
+                Scene scene = new Scene(vbox, 
                                         window.getPreferredWidth(), 
-                                        window.getPreferredHeight(),
+                                        window.getPreferredHeight() + 
+                                                textBackgroundColorPicker
+                                                        .getHeight(),
                                         false,
                                         SceneAntialiasing.BALANCED);
-
+                
                 window.setTitleBorderThickness((int) scene.getY());
 
                 primaryStage.setScene(scene);
@@ -85,9 +132,10 @@ public class TextEditorApp extends Application {
                 helloWorldThread.start();
                 cursorBlinkThread.start();
                 
-                window.repaint();
                 primaryStage.setResizable(false);
                 primaryStage.show();
+                window.requestFocus();
+                window.repaint();
             } catch (Exception ex) {
                 ex.printStackTrace();
                 helloWorldThread.requestExit();
@@ -252,7 +300,7 @@ public class TextEditorApp extends Application {
         @Override
         public void onKeyTyped(KeyEvent event) {
             window.turnOffBlink(cursorX, cursorY);
-            window.printString(cursorX, cursorY, event.getCharacter());
+            window.setChar(cursorX, cursorY, event.getCharacter().charAt(0));
             moveCursorRight();
             
             Platform.runLater(() -> { window.repaint(); });
